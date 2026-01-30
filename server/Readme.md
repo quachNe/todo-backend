@@ -85,8 +85,6 @@ server/
 ---
 
 ## 6. Hướng dẫn chạy Backend
-
-### 6.1. Tạo môi trường ảo
 ```bash
 python -m venv venv
 pip install -r requirements.txt
