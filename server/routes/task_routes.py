@@ -14,6 +14,7 @@ task_bp = Blueprint("task", __name__)
 def get_tasks_by_category(category_id):
     user_id = get_jwt_identity()
 
+    # Kiểm tra category có thuộc user không
     category = Category.query.filter_by(
         id=category_id,
         user_id=user_id
@@ -22,9 +23,11 @@ def get_tasks_by_category(category_id):
     if not category:
         return jsonify({"msg": "Category not found"}), 404
 
+    # Lấy task CHƯA bị xóa
     tasks = Task.query.filter_by(
         category_id=category_id,
-        user_id=user_id
+        user_id=user_id,
+        is_deleted=False
     ).all()
 
     return jsonify([
@@ -35,6 +38,7 @@ def get_tasks_by_category(category_id):
         }
         for t in tasks
     ])
+
 
 
 # =========================
@@ -98,13 +102,16 @@ def delete_task(id):
 
     task = Task.query.filter_by(
         id=id,
-        user_id=user_id
+        user_id=user_id,
+        is_deleted=False
     ).first()
 
     if not task:
         return jsonify({"msg": "Task not found"}), 404
 
-    db.session.delete(task)
+    # Xóa mềm
+    task.is_deleted = True
     db.session.commit()
 
-    return jsonify({"msg": "Deleted"})
+    return jsonify({"msg": "Task deleted successfully"})
+
