@@ -3,7 +3,8 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from models.category import Category
 from models import db
 
-category_bp = Blueprint("category", __name__)
+# Prefix
+category_bp = Blueprint("category", __name__, url_prefix="/api/categories")
 
 # =========================
 # LẤY CATEGORY THEO USER
@@ -14,9 +15,9 @@ category_bp = Blueprint("category", __name__)
 def get_categories():
     user_id = get_jwt_identity()
 
-    categories = Category.query.filter_by(
-        user_id=user_id,
-        is_deleted=False
+    categories = Category.query.filter(
+        Category.user_id == user_id,
+        Category.is_deleted == False
     ).all()
 
     return jsonify([
@@ -26,7 +27,6 @@ def get_categories():
         }
         for c in categories
     ]), 200
-
 
 # =========================
 # TẠO CATEGORY MỚI
@@ -38,7 +38,7 @@ def create_category():
     user_id = get_jwt_identity()
     data = request.get_json()
 
-    if not data or "name" not in data:
+    if not data or not data.get("name"):
         return jsonify({"msg": "Category name is required"}), 400
 
     category = Category(
@@ -67,13 +67,13 @@ def update_category(id):
     user_id = get_jwt_identity()
     data = request.get_json()
 
-    if not data or "name" not in data:
+    if not data or not data.get("name"):
         return jsonify({"msg": "Category name is required"}), 400
 
-    category = Category.query.filter_by(
-        id=id,
-        user_id=user_id,
-        is_deleted=False
+    category = Category.query.filter(
+        Category.id == id,
+        Category.user_id == user_id,
+        Category.is_deleted == False
     ).first()
 
     if not category:
@@ -99,10 +99,10 @@ def update_category(id):
 def delete_category(id):
     user_id = get_jwt_identity()
 
-    category = Category.query.filter_by(
-        id=id,
-        user_id=user_id,
-        is_deleted=False
+    category = Category.query.filter(
+        Category.id == id,
+        Category.user_id == user_id,
+        Category.is_deleted == False
     ).first()
 
     if not category:
@@ -112,4 +112,3 @@ def delete_category(id):
     db.session.commit()
 
     return jsonify({"msg": "Category deleted"}), 200
-

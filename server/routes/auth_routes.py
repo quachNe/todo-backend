@@ -35,10 +35,26 @@ def register():
 @auth_bp.route("/login", methods=["POST"])
 def login():
     data = request.json
-    user = User.query.filter_by(username=data["username"]).first()
 
-    if not user or not verify_password(user.password, data["password"]):
-        return jsonify({"msg": "Invalid credentials"}), 401
+    user = User.query.filter_by(username=data.get("username")).first()
+
+    if not user or not verify_password(user.password, data.get("password")):
+        return jsonify({
+            "success": False,
+            "message": "Sai tài khoản hoặc mật khẩu"
+        }), 401
 
     token = generate_token(user.id)
-    return jsonify(access_token=token)
+
+    return jsonify({
+        "success": True,
+        "message": "Đăng nhập thành công",
+        "token": token,
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "full_name": user.full_name,
+            "gender": user.gender
+        }
+    }), 200
+
