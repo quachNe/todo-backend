@@ -30,28 +30,38 @@ Hệ thống sử dụng **JWT Authentication** để xác thực người dùng
 
 ## 4. Cấu trúc thư mục
 ```plaintext
-server/
+.
+├── server/
+│   ├── app.py                 # Entry point – khởi chạy Flask server
+│   ├── config.py              # Cấu hình ứng dụng
+│   ├── requirements.txt       # Danh sách thư viện Python
+│   ├── .gitignore             # File Git ignore (cho server)
+│   │
+│   ├── models/                # Định nghĩa database models
+│   │   ├── __init__.py
+│   │   ├── db.py
+│   │   ├── user.py
+│   │   ├── category.py
+│   │   └── task.py
+│   │
+│   ├── routes/                # Định nghĩa API endpoints
+│   │   ├── __init__.py
+│   │   ├── auth_routes.py
+│   │   ├── user_routes.py
+│   │   ├── category_routes.py
+│   │   └── task_routes.py
+│   │
+│   ├── utils/                 # Tiện ích dùng chung
+│   │   ├── __init__.py
+│   │   ├── auth.py            # JWT / auth helpers
+│   │   └── hash.py            # Hash & verify password
+│   │
+│   ├── instance/
+│   │   └── todo.db            # SQLite database
+│   │
+│   └── venv/                  # Virtual environment (không commit)
 │
-├── app.py                 # File khởi chạy Flask server
-├── config.py              # Cấu hình ứng dụng
-├── requirements.txt       # Danh sách thư viện
-│
-├── models/                # Định nghĩa database models
-│   ├── __init__.py
-│   ├── user.py
-│   ├── category.py
-│   └── task.py
-│
-├── routes/                # Định nghĩa API endpoints
-│   ├── __init__.py
-│   ├── auth.py
-│   ├── category.py
-│   └── task.py
-│
-├── instance/
-│   └── todo.db            # SQLite database
-│
-└── venv/                  # Virtual environment
+└── README.md                  # Tài liệu tổng quan project
 ```
 
 ---
