@@ -66,6 +66,16 @@ server/
 
 ---
 
+### 🔐 User
+| Method | Endpoint                     | Mô tả                 |
+|--------|------------------------------|-----------------------|
+| GET    | `/api/users`                 | Lấy thông tin user    |
+| POST   | `/api/users`                 | Sửa thông tin user    |
+| POST   | `/api/users/change-password` | Đổi mật khẩu          |
+
+
+---
+
 ### 📂 Category
 | Method | Endpoint          | Mô tả                           |
 |--------|-------------------|---------------------------------|
