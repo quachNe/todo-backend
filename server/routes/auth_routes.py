@@ -10,26 +10,23 @@ auth_bp = Blueprint("auth", __name__)
 def register():
     data = request.json
 
-    # Validate dữ liệu
-    if not data.get("username") or not data.get("password"):
-        return jsonify({"msg": "Missing username or password"}), 400
-
     # Kiểm tra username đã tồn tại chưa
     if User.query.filter_by(username=data["username"]).first():
-        return jsonify({"msg": "User already exists"}), 400
+        return jsonify({"message": "Tên đăng nhập đã tồn tại"}), 400
 
     # Tạo user mới
     user = User(
         username=data["username"],
         password=hash_password(data["password"]),
-        full_name=data.get("full_name"),   # optional
-        gender=data.get("gender")           # optional
+        full_name=data.get("full_name"),
+        gender=data.get("gender"),
+        avatar="default_user.png"   
     )
 
     db.session.add(user)
     db.session.commit()
 
-    return jsonify({"msg": "Register success"}), 201
+    return jsonify({"success": True,"message": "Register success"}), 201
 
 
 @auth_bp.route("/login", methods=["POST"])
@@ -46,6 +43,8 @@ def login():
 
     token = generate_token(user.id)
 
+    avatar_url = request.host_url + "static/uploads/avatars/" + user.avatar
+
     return jsonify({
         "success": True,
         "message": "Đăng nhập thành công",
@@ -54,7 +53,8 @@ def login():
             "id": user.id,
             "username": user.username,
             "full_name": user.full_name,
-            "gender": user.gender
+            "gender": user.gender,
+            "avatar": user.avatar,
+            "avatar_url": avatar_url   # 👈 CỰC KỲ QUAN TRỌNG
         }
     }), 200
-

@@ -8,3 +8,4 @@ class User(db.Model):
     password = db.Column(db.String(200), nullable=False)
     full_name = db.Column(db.String(100))
     gender = db.Column(db.String(10))
+    avatar = db.Column(db.String(255), default="default_user.png")
