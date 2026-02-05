@@ -1,7 +1,8 @@
 # 📌 Todo List Backend – Flask REST API
 
 ## 1. Giới thiệu
-**Todo List Backend** là hệ thống Backend cho ứng dụng Todo List Mobile, được xây dựng theo mô hình **Frontend – Backend tách rời**.  
+**Todo List Backend** là hệ thống Backend cho ứng dụng Todo List Mobile, được xây dựng theo mô hình **Frontend – Backend tách rời**.
+
 Backend cung cấp các **RESTful API** cho phép quản lý người dùng, danh mục công việc (Category) và các công việc cá nhân (Task).
 
 Hệ thống sử dụng **JWT Authentication** để xác thực người dùng, đảm bảo mỗi tài khoản chỉ truy cập và thao tác trên dữ liệu của chính mình.
