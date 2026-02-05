@@ -76,7 +76,7 @@ Hệ thống sử dụng **JWT Authentication** để xác thực người dùng
 
 ---
 
-### 🔐 User
+### 👤 User
 | Method | Endpoint                     | Mô tả                 |
 |--------|------------------------------|-----------------------|
 | GET    | `/api/users`                 | Lấy thông tin user    |
@@ -104,9 +104,18 @@ Hệ thống sử dụng **JWT Authentication** để xác thực người dùng
 
 ---
 
-## 6. Hướng dẫn chạy Backend
+## 6. Hướng dẫn chạy Backend (Windows)
+### 🔹 Lần đầu chạy
 ```bash
-python -m venv venv
-pip install -r requirements.txt
-python app.py 
+cd server
+python -m venv venv #khởi tạo môi trường ảo
+venv\Scripts\activate #kích hoạt môi trường ảo
+pip install -r requirements.txt #cài đặt các thư viện của dự án
+python app.py #chạy dự án
+```
+### 🔹 Những lần chạy sau
+```bash
+cd server
+venv\Scripts\activate #kích hoạt môi trường ảo
+python app.py #chạy dự án
 ```
