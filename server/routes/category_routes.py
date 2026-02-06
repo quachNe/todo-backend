@@ -1,48 +1,66 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from models.category import Category
+from models.task import Task
 from models import db
+from sqlalchemy import func
 
-# Prefix
-category_bp = Blueprint("category", __name__, url_prefix="/api/categories")
+category_bp = Blueprint("category", __name__)
 
 # =========================
-# LẤY CATEGORY THEO USER
+# GET /api/categories/user
 # =========================
-# GET /api/categories
-@category_bp.route("/", methods=["GET"])
+from sqlalchemy import func
+
+@category_bp.route("/user", methods=["GET"])
 @jwt_required()
-def get_categories():
+def get_my_categories():
     user_id = get_jwt_identity()
 
-    categories = Category.query.filter(
-        Category.user_id == user_id,
-        Category.is_deleted == False
-    ).all()
+    results = (
+        db.session.query(
+            Category.id,
+            Category.category_name,
+            func.count(Task.id).label("task_count")
+        )
+        .outerjoin(
+            Task,
+            (Task.category_id == Category.id) &
+            (Task.is_deleted == False)
+        )
+        .filter(
+            Category.user_id == user_id,
+            Category.is_deleted == False
+        )
+        .group_by(Category.id)
+        .all()
+    )
 
     return jsonify([
         {
-            "id": c.id,
-            "name": c.name
+            "id": r.id,
+            "category_name": r.category_name,
+            "task_count": r.task_count
         }
-        for c in categories
+        for r in results
     ]), 200
 
-# =========================
-# TẠO CATEGORY MỚI
+
+
 # =========================
 # POST /api/categories
-@category_bp.route("/", methods=["POST"])
+# =========================
+@category_bp.route("", methods=["POST"])
 @jwt_required()
 def create_category():
     user_id = get_jwt_identity()
     data = request.get_json()
 
-    if not data or not data.get("name"):
+    if not data or not data.get("category_name"):
         return jsonify({"msg": "Category name is required"}), 400
 
     category = Category(
-        name=data["name"],
+        category_name=data["category_name"],
         user_id=user_id
     )
 
@@ -50,17 +68,13 @@ def create_category():
     db.session.commit()
 
     return jsonify({
-        "msg": "Category created",
-        "category": {
-            "id": category.id,
-            "name": category.name
-        }
+        "id": category.id,
+        "category_name": category.category_name
     }), 201
 
 # =========================
-# SỬA CATEGORY
-# =========================
 # PUT /api/categories/<id>
+# =========================
 @category_bp.route("/<int:id>", methods=["PUT"])
 @jwt_required()
 def update_category(id):
@@ -79,21 +93,18 @@ def update_category(id):
     if not category:
         return jsonify({"msg": "Category not found"}), 404
 
-    category.name = data["name"]
+    category.category_name = data["name"]
     db.session.commit()
 
     return jsonify({
-        "msg": "Category updated",
-        "category": {
-            "id": category.id,
-            "name": category.name
-        }
+        "id": category.id,
+        "name": category.category_name
     }), 200
 
+
 # =========================
-# XÓA CATEGORY XÓA MỀM
+# DELETE /api/categories/<id>
 # =========================
-# DELETE /api/categories
 @category_bp.route("/<int:id>", methods=["DELETE"])
 @jwt_required()
 def delete_category(id):

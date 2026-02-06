@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import create_access_token
 from models.user import User
 from models import db
 from utils.hash import hash_password, verify_password
@@ -41,20 +42,20 @@ def login():
             "message": "Sai tài khoản hoặc mật khẩu"
         }), 401
 
-    token = generate_token(user.id)
+    token = create_access_token(identity=str(user.id))
 
     avatar_url = request.host_url + "static/uploads/avatars/" + user.avatar
 
     return jsonify({
         "success": True,
         "message": "Đăng nhập thành công",
-        "token": token,
+        "access_token": token,
         "user": {
             "id": user.id,
             "username": user.username,
             "full_name": user.full_name,
             "gender": user.gender,
             "avatar": user.avatar,
-            "avatar_url": avatar_url   # 👈 CỰC KỲ QUAN TRỌNG
+            "avatar_url": avatar_url
         }
     }), 200
