@@ -1,3 +1,4 @@
+from sqlalchemy.exc import IntegrityError
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from models.category import Category
@@ -50,22 +51,27 @@ def get_my_categories():
 # =========================
 # POST /api/categories
 # =========================
+
 @category_bp.route("", methods=["POST"])
 @jwt_required()
 def create_category():
     user_id = get_jwt_identity()
     data = request.get_json()
 
-    if not data or not data.get("category_name"):
-        return jsonify({"msg": "Category name is required"}), 400
-
     category = Category(
-        category_name=data["category_name"],
+        category_name=data.get("category_name"),
         user_id=user_id
     )
 
     db.session.add(category)
-    db.session.commit()
+
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({
+            "message": "Danh mục đã tồn tại"
+        }), 409
 
     return jsonify({
         "id": category.id,
@@ -81,8 +87,7 @@ def update_category(id):
     user_id = get_jwt_identity()
     data = request.get_json()
 
-    if not data or not data.get("name"):
-        return jsonify({"msg": "Category name is required"}), 400
+    category_name = data.get("category_name")
 
     category = Category.query.filter(
         Category.id == id,
@@ -91,16 +96,35 @@ def update_category(id):
     ).first()
 
     if not category:
-        return jsonify({"msg": "Category not found"}), 404
+        return jsonify({"message": "Category not found"}), 404
 
-    category.category_name = data["name"]
-    db.session.commit()
+    # ✅ CHECK TRÙNG (loại trừ chính nó)
+    exists = Category.query.filter(
+        Category.user_id == user_id,
+        Category.category_name == category_name,
+        Category.is_deleted == False,
+        Category.id != id
+    ).first()
+
+    if exists:
+        return jsonify({
+            "message": "Danh mục đã tồn tại"
+        }), 409
+
+    category.category_name = category_name
+
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({
+            "message": "Danh mục đã tồn tại"
+        }), 409
 
     return jsonify({
         "id": category.id,
-        "name": category.category_name
+        "category_name": category.category_name
     }), 200
-
 
 # =========================
 # DELETE /api/categories/<id>
