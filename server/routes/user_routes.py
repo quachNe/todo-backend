@@ -3,14 +3,20 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from models.user import User
 from models import db
 from utils.hash import hash_password, verify_password
+import os
+from flask import request, jsonify, current_app
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from werkzeug.utils import secure_filename
+
 
 user_bp = Blueprint("user", __name__)
+DEFAULT_AVATAR = "default_user.png"
 
 # =========================
 # LẤY THÔNG TIN USER
 # =========================
 # GET /api/users
-@user_bp.route("/", methods=["GET"])
+@user_bp.route("", methods=["GET"])
 @jwt_required()
 def get_profile():
     user_id = get_jwt_identity()
@@ -20,11 +26,15 @@ def get_profile():
     if not user:
         return jsonify({"msg": "User not found"}), 404
 
+    BASE_URL = "http://10.0.2.2:5000/"
     return jsonify({
+        "user": {
         "id": user.id,
         "username": user.username,
         "full_name": user.full_name,
-        "gender": user.gender
+        "gender": user.gender,
+        "avatar": BASE_URL + "static/uploads/avatars/" + user.avatar
+        }
     }), 200
 
 
@@ -32,14 +42,9 @@ def get_profile():
 # CẬP NHẬT THÔNG TIN USER
 # =========================
 # PUT /api/users
-import os
-from flask import request, jsonify, current_app
-from flask_jwt_extended import jwt_required, get_jwt_identity
-from werkzeug.utils import secure_filename
 
-DEFAULT_AVATAR = "default_user.png"
 
-@user_bp.route("/", methods=["PUT"])
+@user_bp.route("/", methods=["PATCH"])
 @jwt_required()
 def update_profile():
     user_id = get_jwt_identity()
@@ -48,13 +53,13 @@ def update_profile():
     if not user:
         return jsonify({"msg": "User not found"}), 404
 
-    data = request.form  # dùng form để nhận cả text + file
+    data = request.form  # nhận text + file
 
     # ===== Update text fields =====
-    if "full_name" in data:
+    if "full_name" in data and data["full_name"].strip():
         user.full_name = data["full_name"]
 
-    if "gender" in data:
+    if "gender" in data and data["gender"].strip():
         user.gender = data["gender"]
 
     # ===== Handle avatar =====
@@ -68,20 +73,18 @@ def update_profile():
                 current_app.root_path,
                 "static/uploads/avatars"
             )
-
             os.makedirs(upload_folder, exist_ok=True)
 
-            # 👉 Nếu avatar cũ KHÔNG phải default → xóa
+            # xóa avatar cũ nếu không phải default
             if user.avatar and user.avatar != DEFAULT_AVATAR:
                 old_path = os.path.join(upload_folder, user.avatar)
                 if os.path.exists(old_path):
                     os.remove(old_path)
 
-            # 👉 Lưu avatar mới
+            # lưu avatar mới
             new_filename = f"user_{user.id}_{filename}"
             file.save(os.path.join(upload_folder, new_filename))
 
-            # 👉 Gán avatar mới
             user.avatar = new_filename
 
     db.session.commit()
@@ -99,6 +102,7 @@ def update_profile():
             "avatar_url": avatar_url
         }
     }), 200
+
 
 # =========================
 # ĐỔI MẬT KHẨU
