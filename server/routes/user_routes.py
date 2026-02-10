@@ -42,8 +42,6 @@ def get_profile():
 # CẬP NHẬT THÔNG TIN USER
 # =========================
 # PUT /api/users
-
-
 @user_bp.route("/", methods=["PATCH"])
 @jwt_required()
 def update_profile():
@@ -89,8 +87,6 @@ def update_profile():
 
     db.session.commit()
 
-    avatar_url = f"http://10.0.2.2:5000/static/uploads/avatars/{user.avatar}"
-
     return jsonify({
         "msg": "Profile updated",
         "user": {
@@ -99,7 +95,6 @@ def update_profile():
             "full_name": user.full_name,
             "gender": user.gender,
             "avatar": user.avatar,
-            "avatar_url": avatar_url
         }
     }), 200
 
