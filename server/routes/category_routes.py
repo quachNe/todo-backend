@@ -11,8 +11,6 @@ category_bp = Blueprint("category", __name__)
 # =========================
 # GET /api/categories/user
 # =========================
-from sqlalchemy import func
-
 @category_bp.route("/user", methods=["GET"])
 @jwt_required()
 def get_my_categories():
@@ -50,7 +48,6 @@ def get_my_categories():
 # =========================
 # POST /api/categories
 # =========================
-
 @category_bp.route("", methods=["POST"])
 @jwt_required()
 def create_category():

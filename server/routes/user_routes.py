@@ -42,7 +42,7 @@ def get_profile():
 # CẬP NHẬT THÔNG TIN USER
 # =========================
 # PUT /api/users
-@user_bp.route("/", methods=["PATCH"])
+@user_bp.route("", methods=["PATCH"])
 @jwt_required()
 def update_profile():
     user_id = get_jwt_identity()
@@ -88,7 +88,7 @@ def update_profile():
     db.session.commit()
 
     return jsonify({
-        "msg": "Profile updated",
+        "message": "Profile updated",
         "user": {
             "id": user.id,
             "username": user.username,
@@ -109,15 +109,20 @@ def change_password():
     user_id = get_jwt_identity()
     data = request.get_json()
 
-    if not data.get("old_password") or not data.get("new_password"):
-        return jsonify({"msg": "Missing password"}), 400
+    # if not data.get("old_password") or not data.get("new_password"):
+    #     return jsonify({"message": "Missing password"}), 400
 
     user = User.query.get(user_id)
 
     if not verify_password(user.password, data["old_password"]):
-        return jsonify({"msg": "Old password incorrect"}), 401
+        return jsonify({"message": "Mật khẩu cũ không đúng"}), 401
+    
+    # if data["old_password"] == data["new_password"]:
+    #     return jsonify({"message": "Mật khẩu mới không được trùng với mật khẩu cũ"}), 400
 
     user.password = hash_password(data["new_password"])
     db.session.commit()
 
-    return jsonify({"msg": "Password updated"}), 200
+    return jsonify({
+        "success": True,
+        "message": "Cập nhật mật khẩu thành công"}), 200
