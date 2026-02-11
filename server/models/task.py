@@ -10,18 +10,21 @@ class Task(db.Model):
     completed = db.Column(db.Boolean, default=False)
     deadline = db.Column(db.DateTime)
 
-    user_id = db.Column(
-        db.Integer,
-        db.ForeignKey('user.id'),
-        nullable=False
-    )
-
     category_id = db.Column(
         db.Integer,
         db.ForeignKey('category.id'),
         nullable=False
     )
 
-    is_deleted = db.Column(db.Boolean, default=False) # true: đã xóa, false: đang hoạt động
-    user = db.relationship('User', backref='tasks')
+    is_deleted = db.Column(db.Boolean, default=False)
+
     category = db.relationship('Category', backref='tasks')
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            'category_id',
+            'task_name',
+            'is_deleted',
+            name='unique_active_task_per_category'
+        ),
+    )

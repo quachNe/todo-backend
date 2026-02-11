@@ -56,8 +56,22 @@ def create_category():
     user_id = get_jwt_identity()
     data = request.get_json()
 
+    if not data or not data.get("category_name", "").strip():
+        return jsonify({
+            "message": "Tên danh mục không được để trống"
+        }), 400
+
+    category_name = data.get("category_name").strip()
+
+    if len(category_name) > 100:
+        return jsonify({
+            "message": "Tên danh mục không được vượt quá 100 ký tự"
+        }), 400
+
+    category_name = " ".join(category_name.split())
+
     category = Category(
-        category_name=data.get("category_name"),
+        category_name=category_name,
         user_id=user_id
     )
 
@@ -75,6 +89,7 @@ def create_category():
         "id": category.id,
         "category_name": category.category_name
     }), 201
+
 
 # =========================
 # Sửa danh mục
@@ -95,7 +110,7 @@ def update_category(id):
     ).first()
 
     if not category:
-        return jsonify({"message": "Category not found"}), 404
+        return jsonify({"message": "Danh mục không tồn tại"}), 404
 
     # CHECK TRÙNG TÊN DANH MỤC
     exists = Category.query.filter(
@@ -125,6 +140,7 @@ def update_category(id):
         "category_name": category.category_name
     }), 200
 
+
 # =========================
 # Xóa danh mục
 # DELETE /api/categories/<id>
@@ -141,9 +157,9 @@ def delete_category(id):
     ).first()
 
     if not category:
-        return jsonify({"msg": "Category not found"}), 404
+        return jsonify({"message": "Danh mục không tồn tại"}), 404
 
     category.is_deleted = True
     db.session.commit()
 
-    return jsonify({"msg": "Category deleted"}), 200
+    return jsonify({"message": "Xóa danh mục thành công"}), 200

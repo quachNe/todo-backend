@@ -13,8 +13,8 @@ auth_bp = Blueprint("auth", __name__)
 
 # =========================
 # ĐĂNG KÝ TÀI KHOẢN
-# =========================
 # POST /api/auth/register
+# =========================
 @auth_bp.route("/register", methods=["POST"])
 def register():
     data = request.json
@@ -38,8 +38,8 @@ def register():
 
 # =========================
 # ĐĂNG NHẬP TÀI KHOẢN
-# =========================
 # POST /api/auth/login
+# =========================
 @auth_bp.route("/login", methods=["POST"])
 def login():
     data = request.json
@@ -70,8 +70,8 @@ def login():
 
 # =========================
 # GỬI EMAIL KHÔI PHỤC MẬT KHẨU
-# =========================
 # POST /api/auth/forgot-password
+# =========================
 @auth_bp.route("/forgot-password", methods=["POST"])
 def forgot_password():
     data = request.json
@@ -105,8 +105,8 @@ def forgot_password():
 
 # =========================
 # XÁC THỰC MÃ KHÔI PHỤC MẬT KHẨU
-# =========================
 # POST /api/auth/verify-reset-code
+# =========================
 @auth_bp.route("/verify-reset-code", methods=["POST"])
 def verify_reset_code():
     data = request.json
@@ -134,8 +134,8 @@ def verify_reset_code():
 
 # =========================
 # ĐỔI MẬT KHẨU SAU KHI XÁC THỰC OTP
-# =========================
 # POST /api/auth/verify-reset-code
+# =========================
 @auth_bp.route("/reset-password", methods=["POST"])
 def reset_password():
     data = request.json
