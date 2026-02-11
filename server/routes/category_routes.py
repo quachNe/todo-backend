@@ -8,10 +8,11 @@ from sqlalchemy import func
 
 category_bp = Blueprint("category", __name__)
 
-# =========================
-# GET /api/categories/user
-# =========================
-@category_bp.route("/user", methods=["GET"])
+# ==========================================
+# Lấy danh sách danh mục của 1 người dùng
+# GET /api/categories
+# ==========================================
+@category_bp.route("", methods=["GET"])
 @jwt_required()
 def get_my_categories():
     user_id = get_jwt_identity()
@@ -46,6 +47,7 @@ def get_my_categories():
 
 
 # =========================
+# Tạo mới một danh mục
 # POST /api/categories
 # =========================
 @category_bp.route("", methods=["POST"])
@@ -75,6 +77,7 @@ def create_category():
     }), 201
 
 # =========================
+# Sửa danh mục
 # PUT /api/categories/<id>
 # =========================
 @category_bp.route("/<int:id>", methods=["PUT"])
@@ -94,7 +97,7 @@ def update_category(id):
     if not category:
         return jsonify({"message": "Category not found"}), 404
 
-    # ✅ CHECK TRÙNG (loại trừ chính nó)
+    # CHECK TRÙNG TÊN DANH MỤC
     exists = Category.query.filter(
         Category.user_id == user_id,
         Category.category_name == category_name,
@@ -123,6 +126,7 @@ def update_category(id):
     }), 200
 
 # =========================
+# Xóa danh mục
 # DELETE /api/categories/<id>
 # =========================
 @category_bp.route("/<int:id>", methods=["DELETE"])

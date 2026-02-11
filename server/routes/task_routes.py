@@ -7,16 +7,15 @@ from datetime import datetime
 
 task_bp = Blueprint("task", __name__)
 
+
 # =========================
-# LẤY TASK THEO CATEGORY
+# GET /api/categories/<category_id>/tasks
 # =========================
-# GET /api/categories/<id>/tasks
 @task_bp.route("/categories/<int:category_id>/tasks", methods=["GET"])
 @jwt_required()
 def get_tasks_by_category(category_id):
     user_id = get_jwt_identity()
 
-    # Check category thuộc user & chưa bị xóa
     category = Category.query.filter_by(
         id=category_id,
         user_id=user_id,
@@ -24,37 +23,41 @@ def get_tasks_by_category(category_id):
     ).first()
 
     if not category:
-        return jsonify({"msg": "Category not found"}), 404
+        return jsonify({"message": "Category not found"}), 404
 
-    tasks = Task.query.filter_by(
-        category_id=category_id,
-        user_id=user_id,
-        is_deleted=False
-    ).all()
+    tasks = (
+        Task.query
+        .filter_by(
+            category_id=category_id,
+            user_id=user_id,
+            is_deleted=False
+        )
+        .order_by(Task.id.desc())
+        .all()
+    )
 
     return jsonify([
         {
             "id": t.id,
             "task_name": t.task_name,
             "completed": t.completed,
-            "deadline": t.deadline.isoformat() if t.deadline else None
+            "deadline": t.deadline.isoformat() if t.deadline else None,
         }
         for t in tasks
     ]), 200
 
 
 # =========================
-# TẠO TASK TRONG CATEGORY
+# POST /api/categories/<category_id>/tasks
 # =========================
-# POST /api/categories/<id>/tasks
 @task_bp.route("/categories/<int:category_id>/tasks", methods=["POST"])
 @jwt_required()
 def create_task(category_id):
     user_id = get_jwt_identity()
     data = request.get_json()
 
-    if not data or "task_name" not in data:
-        return jsonify({"msg": "Task name is required"}), 400
+    if not data or not data.get("task_name"):
+        return jsonify({"message": "Task name is required"}), 400
 
     category = Category.query.filter_by(
         id=category_id,
@@ -63,11 +66,14 @@ def create_task(category_id):
     ).first()
 
     if not category:
-        return jsonify({"msg": "Category not found"}), 404
+        return jsonify({"message": "Category not found"}), 404
 
     deadline = None
     if data.get("deadline"):
-        deadline = datetime.fromisoformat(data["deadline"])
+        try:
+            deadline = datetime.fromisoformat(data["deadline"])
+        except ValueError:
+            return jsonify({"message": "Invalid deadline format"}), 400
 
     task = Task(
         task_name=data["task_name"],
@@ -80,32 +86,33 @@ def create_task(category_id):
     db.session.commit()
 
     return jsonify({
-        "msg": "Task created",
-        "task": {
-            "id": task.id,
-            "task_name": task.task_name
-        }
+        "id": task.id,
+        "task_name": task.task_name,
+        "completed": task.completed,
+        "deadline": task.deadline.isoformat() if task.deadline else None
     }), 201
 
 
 # =========================
-# CẬP NHẬT TASK
+# PUT /api/tasks/<task_id>
 # =========================
-# PUT /api/tasks/<id>
-@task_bp.route("/tasks/<int:id>", methods=["PUT"])
+@task_bp.route("/tasks/<int:task_id>", methods=["PUT"])
 @jwt_required()
-def update_task(id):
+def update_task(task_id):
     user_id = get_jwt_identity()
     data = request.get_json()
 
+    if not data:
+        return jsonify({"message": "No data provided"}), 400
+
     task = Task.query.filter_by(
-        id=id,
+        id=task_id,
         user_id=user_id,
         is_deleted=False
     ).first()
 
     if not task:
-        return jsonify({"msg": "Task not found"}), 404
+        return jsonify({"message": "Task not found"}), 404
 
     if "task_name" in data:
         task.task_name = data["task_name"]
@@ -114,36 +121,42 @@ def update_task(id):
         task.completed = data["completed"]
 
     if "deadline" in data:
-        task.deadline = (
-            datetime.fromisoformat(data["deadline"])
-            if data["deadline"]
-            else None
-        )
+        if data["deadline"]:
+            try:
+                task.deadline = datetime.fromisoformat(data["deadline"])
+            except ValueError:
+                return jsonify({"message": "Invalid deadline format"}), 400
+        else:
+            task.deadline = None
 
     db.session.commit()
 
-    return jsonify({"msg": "Task updated"}), 200
+    return jsonify({
+        "id": task.id,
+        "task_name": task.task_name,
+        "completed": task.completed,
+        "deadline": task.deadline.isoformat() if task.deadline else None
+    }), 200
 
 
 # =========================
-# XOÁ TASK (XOÁ MỀM)
+# DELETE /api/tasks/<task_id>
 # =========================
-# DELETE /api/tasks/<id>
-@task_bp.route("/tasks/<int:id>", methods=["DELETE"])
+@task_bp.route("/tasks/<int:task_id>", methods=["DELETE"])
 @jwt_required()
-def delete_task(id):
+def delete_task(task_id):
     user_id = get_jwt_identity()
 
     task = Task.query.filter_by(
-        id=id,
+        id=task_id,
         user_id=user_id,
         is_deleted=False
     ).first()
 
     if not task:
-        return jsonify({"msg": "Task not found"}), 404
+        return jsonify({"message": "Task not found"}), 404
 
     task.is_deleted = True
     db.session.commit()
 
-    return jsonify({"msg": "Task deleted"}), 200
+    return jsonify({"message": "Task deleted successfully"}), 200
