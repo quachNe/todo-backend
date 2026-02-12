@@ -109,16 +109,16 @@ def change_password():
     user_id = get_jwt_identity()
     data = request.get_json()
 
-    # if not data.get("old_password") or not data.get("new_password"):
-    #     return jsonify({"message": "Missing password"}), 400
+    if not data.get("old_password") or not data.get("new_password"):
+        return jsonify({"message": "Missing password"}), 400
 
     user = User.query.get(user_id)
 
     if not verify_password(user.password, data["old_password"]):
         return jsonify({"message": "Mật khẩu cũ không đúng"}), 401
     
-    # if data["old_password"] == data["new_password"]:
-    #     return jsonify({"message": "Mật khẩu mới không được trùng với mật khẩu cũ"}), 400
+    if data["old_password"] == data["new_password"]:
+        return jsonify({"message": "Mật khẩu mới không được trùng với mật khẩu cũ"}), 400
 
     user.password = hash_password(data["new_password"])
     db.session.commit()
