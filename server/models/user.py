@@ -9,3 +9,6 @@ class User(db.Model):
     full_name = db.Column(db.String(100))
     gender = db.Column(db.String(10))
     avatar = db.Column(db.String(255), default="default_user.png")
+
+    is_deleted = db.Column(db.Boolean, default=False)
+    deleted_at = db.Column(db.DateTime, nullable=True)

@@ -45,15 +45,36 @@ def login():
     data = request.json
 
     user = User.query.filter_by(username=data.get("username")).first()
-
+    # ===== Sai thông tin =====
     if not user or not verify_password(user.password, data.get("password")):
         return jsonify({
             "success": False,
             "message": "Sai tài khoản hoặc mật khẩu"
         }), 401
+    
+    # ===== ĐANG CHỜ XÓA =====
+    if user.is_deleted:
 
+        expire_time = user.deleted_at + timedelta(days=15)
+
+        # 💀 Quá hạn → coi như đã xóa
+        if datetime.utcnow() > expire_time:
+            return jsonify({
+                "success": False,
+                "message": "Tài khoản đã bị xóa vĩnh viễn"
+            }), 410
+
+        # ⚠️ Trong 15 ngày → cho phép khôi phục
+        return jsonify({
+            "success": False,
+            "message": "Tài khoản đang chờ xóa",
+            "can_restore": True,
+            "restore_until": expire_time.isoformat(),
+            "username": user.username
+        }), 403
+
+    # ===== LOGIN BÌNH THƯỜNG =====
     token = create_access_token(identity=str(user.id))
-
     return jsonify({
         "success": True,
         "message": "Đăng nhập thành công",
@@ -160,4 +181,37 @@ def reset_password():
     return jsonify({
         "success": True,
         "message": "Đổi mật khẩu thành công"
+    }), 200
+
+
+# =========================
+# KHÔI PHỤC TÀI KHOẢN
+# POST /api/auth/restore-account
+# =========================
+@auth_bp.route("/restore-account", methods=["POST"])
+def restore_account():
+    data = request.json
+
+    user = User.query.filter_by(username=data.get("username")).first()
+
+    if not user:
+        return jsonify({
+            "success": False,
+            "message": "User không tồn tại"
+        }), 404
+
+    if not user.is_deleted:
+        return jsonify({
+            "success": False,
+            "message": "Tài khoản không ở trạng thái chờ xóa"
+        }), 400
+
+    user.is_deleted = False
+    user.deleted_at = None
+
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "message": "Khôi phục tài khoản thành công"
     }), 200

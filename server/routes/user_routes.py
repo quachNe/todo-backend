@@ -7,7 +7,7 @@ import os
 from flask import request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
-
+from datetime import datetime
 
 user_bp = Blueprint("user", __name__)
 DEFAULT_AVATAR = "default_user.png"
@@ -126,3 +126,39 @@ def change_password():
     return jsonify({
         "success": True,
         "message": "Cập nhật mật khẩu thành công"}), 200
+
+
+# =========================
+# YÊU CẦU XÓA TÀI KHOẢN
+# DELETE /api/users/delete-request
+# =========================
+@user_bp.route("/delete-request", methods=["DELETE"])
+@jwt_required()
+def request_delete_account():
+
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+
+    if not user:
+        return jsonify({
+            "success": False,
+            "message": "User not found"
+        }), 404
+
+    # Nếu đã yêu cầu xóa rồi
+    if user.is_deleted:
+        return jsonify({
+            "success": False,
+            "message": "Tài khoản đã đang chờ xóa"
+        }), 400
+
+    # Đánh dấu chờ xóa
+    user.is_deleted = True
+    user.deleted_at = datetime.utcnow()
+
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "message": "Tài khoản sẽ bị xóa vĩnh viễn sau 15 ngày"
+    }), 200
