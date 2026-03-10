@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import random
 from utils.reset_cache import reset_codes
 from utils.mail import send_email
+import os, re
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -19,22 +20,49 @@ auth_bp = Blueprint("auth", __name__)
 def register():
     data = request.json
 
-    # Kiểm tra username đã tồn tại chưa
-    if User.query.filter_by(username=data["username"]).first():
+    username = data.get("username", "").strip()
+    password = data.get("password")
+    email = data.get("email", "").strip()
+
+    if not username or not password or not email:
+        return jsonify({"message": "Thiếu username, password hoặc email"}), 400
+
+    # kiểm tra username tồn tại
+    if User.query.filter_by(username=username).first():
         return jsonify({"message": "Tên đăng nhập đã tồn tại"}), 400
 
+    # kiểm tra email tồn tại
+    if User.query.filter_by(email=email).first():
+        return jsonify({"message": "Email đã được sử dụng"}), 400
+
+    # kiểm tra format email
+    email_pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
+    if not re.match(email_pattern, email):
+        return jsonify({"message": "Email không hợp lệ"}), 400
+
+    # kiểm tra password mạnh
+    pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{6,}$'
+    if not re.match(pattern, password):
+        return jsonify({
+            "message": "Mật khẩu phải có chữ hoa, chữ thường, số và ký tự đặc biệt"
+        }), 400
+
     user = User(
-        username=data["username"],
-        password=hash_password(data["password"]),
+        username=username,
+        password=hash_password(password),
         full_name=data.get("full_name"),
         gender=data.get("gender"),
-        avatar="default_user.png"   
+        avatar="default_user.png",
+        email=email
     )
 
     db.session.add(user)
     db.session.commit()
 
-    return jsonify({"success": True,"message": "Register success"}), 201
+    return jsonify({
+        "success": True,
+        "message": "Register success"
+    }), 201
 
 # =========================
 # ĐĂNG NHẬP TÀI KHOẢN
@@ -57,14 +85,14 @@ def login():
 
         expire_time = user.deleted_at + timedelta(days=15)
 
-        # 💀 Quá hạn → coi như đã xóa
+        # Quá hạn → coi như đã xóa
         if datetime.utcnow() > expire_time:
             return jsonify({
                 "success": False,
                 "message": "Tài khoản đã bị xóa vĩnh viễn"
             }), 410
 
-        # ⚠️ Trong 15 ngày → cho phép khôi phục
+        # Trong 15 ngày → cho phép khôi phục
         return jsonify({
             "success": False,
             "message": "Tài khoản đang chờ xóa",
@@ -96,25 +124,32 @@ def login():
 @auth_bp.route("/forgot-password", methods=["POST"])
 def forgot_password():
     data = request.json
-    username = data.get("username")
     email = data.get("email")
+    username = data.get("username")
 
     if not username or not email:
         return jsonify({"success": False, "message": "Thiếu dữ liệu"}), 400
 
-    user = User.query.filter_by(username=username).first()
+    # ===== KIỂM TRA USERNAME + EMAIL =====
+    user = User.query.filter_by(username=username, email=email).first()
     if not user:
-        return jsonify({"success": False, "message": "User không tồn tại"}), 404
-
+        return jsonify({
+            "success": False,
+            "message": "Username hoặc email không đúng"
+        }), 404
+    
+    # ===== TẠO OTP =====
     code = str(random.randint(100000, 999999))
 
+    
     reset_codes[username] = {
         "code": code,
         "expire": datetime.utcnow() + timedelta(minutes=5)
     }
 
+    # ===== GỬI EMAIL =====
     send_email(
-        to=email,
+        to=user.email,
         subject="Khôi phục mật khẩu",
         content=f"Mã xác nhận của bạn là: {code}\nCó hiệu lực 5 phút."
     )
@@ -185,7 +220,7 @@ def reset_password():
 
 
 # =========================
-# KHÔI PHỤC TÀI KHOẢN
+# KHÔI PHỤC TÀI KHOẢN ĐANG CHỜ XÓA
 # POST /api/auth/restore-account
 # =========================
 @auth_bp.route("/restore-account", methods=["POST"])

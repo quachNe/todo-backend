@@ -9,6 +9,7 @@ from sqlalchemy import func
 task_bp = Blueprint("task", __name__)
 
 # =========================================================
+# LẤY DANH SÁCH CÔNG VIỆC THEO DANH MỤC
 # GET /api/categories/<category_id>/tasks
 # =========================================================
 @task_bp.route("/categories/<int:category_id>/tasks", methods=["GET"])
@@ -71,6 +72,7 @@ def get_tasks_by_category(category_id):
     }), 200
 
 # =========================================================
+# THÊM MỚI MỘT CÔNG VIỆC VÀO DANH MỤC
 # POST /api/categories/<category_id>/tasks
 # =========================================================
 @task_bp.route("/categories/<int:category_id>/tasks", methods=["POST"])
@@ -140,6 +142,7 @@ def create_task(category_id):
     }), 201
 
 # =========================================================
+# CẬP NHẬT THÔNG TIN CÔNG VIỆC TRONG DANH MỤC
 # PUT /api/tasks/<task_id>
 # =========================================================
 @task_bp.route("/tasks/<int:task_id>", methods=["PUT"])
