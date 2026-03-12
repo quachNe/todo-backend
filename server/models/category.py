@@ -12,14 +12,12 @@ class Category(db.Model):
         nullable=False
     )
 
-    is_deleted = db.Column(db.Boolean, default=False, nullable=False) # true: đã xóa, false: đang hoạt động
     user = db.relationship('User', backref='categories')
 
     __table_args__ = (
         db.UniqueConstraint(
             'user_id',
             'category_name',
-            'is_deleted',
-            name='uq_user_category_active'
+            name='uq_user_category'
         ),
     )

@@ -22,7 +22,6 @@ def get_tasks_by_category(category_id):
     category = Category.query.filter_by(
         id=category_id,
         user_id=user_id,
-        is_deleted=False
     ).first()
 
     if not category:
@@ -33,7 +32,7 @@ def get_tasks_by_category(category_id):
     # Get all tasks
     tasks = (
         Task.query
-        .filter_by(category_id=category_id, is_deleted=False)
+        .filter_by(category_id=category_id)
         .order_by(Task.id.desc())
         .all()
     )
@@ -91,8 +90,7 @@ def create_task(category_id):
 
     category = Category.query.filter_by(
         id=category_id,
-        user_id=user_id,
-        is_deleted=False
+        user_id=user_id
     ).first()
 
     if not category:
@@ -102,8 +100,7 @@ def create_task(category_id):
 
     existing_task = Task.query.filter_by(
         category_id=category_id,
-        task_name=task_name,
-        is_deleted=False
+        task_name=task_name
     ).first()
 
     if existing_task:
@@ -162,9 +159,7 @@ def update_task(task_id):
         .join(Category)
         .filter(
             Task.id == task_id,
-            Task.is_deleted == False,
             Category.user_id == user_id,
-            Category.is_deleted == False
         )
         .first()
     )
@@ -186,7 +181,6 @@ def update_task(task_id):
         existing_task = Task.query.filter(
             Task.category_id == task.category_id,
             Task.task_name == new_name,
-            Task.is_deleted == False,
             Task.id != task.id
         ).first()
 
@@ -241,9 +235,7 @@ def delete_task(task_id):
         .join(Category)
         .filter(
             Task.id == task_id,
-            Task.is_deleted == False,
-            Category.user_id == user_id,
-            Category.is_deleted == False
+            Category.user_id == user_id
         )
         .first()
     )
@@ -253,7 +245,7 @@ def delete_task(task_id):
             "message": "Công việc không tồn tại"
         }), 404
 
-    task.is_deleted = True
+    db.session.delete(task)
     db.session.commit()
 
     return jsonify({

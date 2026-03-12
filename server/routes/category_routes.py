@@ -25,12 +25,10 @@ def get_my_categories():
         )
         .outerjoin(
             Task,
-            (Task.category_id == Category.id) &
-            (Task.is_deleted == False)
+            (Task.category_id == Category.id)
         )
         .filter(
             Category.user_id == user_id,
-            Category.is_deleted == False
         )
         .group_by(Category.id)
         .all()
@@ -106,7 +104,6 @@ def update_category(id):
     category = Category.query.filter(
         Category.id == id,
         Category.user_id == user_id,
-        Category.is_deleted == False
     ).first()
 
     if not category:
@@ -116,7 +113,6 @@ def update_category(id):
     exists = Category.query.filter(
         Category.user_id == user_id,
         Category.category_name == category_name,
-        Category.is_deleted == False,
         Category.id != id
     ).first()
 
@@ -153,13 +149,12 @@ def delete_category(id):
     category = Category.query.filter(
         Category.id == id,
         Category.user_id == user_id,
-        Category.is_deleted == False
     ).first()
 
     if not category:
         return jsonify({"message": "Danh mục không tồn tại"}), 404
 
-    category.is_deleted = True
+    db.session.delete(category)   # xóa record
     db.session.commit()
 
     return jsonify({"message": "Xóa danh mục thành công"}), 200
