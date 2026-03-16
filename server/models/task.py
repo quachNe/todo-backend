@@ -17,7 +17,10 @@ class Task(db.Model):
         nullable=False
     )
 
-    category = db.relationship('Category', backref='tasks')
+    category = db.relationship(
+        'Category',
+        backref=db.backref('tasks', cascade='all, delete-orphan')
+    )
 
     __table_args__ = (
         db.UniqueConstraint(
